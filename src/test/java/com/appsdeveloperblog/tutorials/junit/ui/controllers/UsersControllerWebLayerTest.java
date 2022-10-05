@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -28,7 +29,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 
-@WebMvcTest(controllers = UsersController.class, excludeAutoConfiguration = {SecurityAutoConfiguration.class})
+@WebMvcTest(controllers = UsersController.class,
+        excludeAutoConfiguration = {SecurityAutoConfiguration.class})
 @MockBean({UsersServiceImpl.class})///////////// !!!!!!!!!!!!!
 public class UsersControllerWebLayerTest {
     @Autowired
@@ -84,5 +86,28 @@ public class UsersControllerWebLayerTest {
 //        Assertions.assertNotNull(createdUser.getUserId());
         Assertions.assertFalse(createdUser.getUserId().isEmpty(),"UserId should not be empty");
 
+    }
+
+    @Test
+    @DisplayName("First name is not present")
+    void testCreateUser_FirstNameIsNotProvided_return400Status() throws Exception {
+        //arrange
+        UserDetailsRequestModel userDetailsRequestModel = new UserDetailsRequestModel();
+        userDetailsRequestModel.setFirstName("");
+        userDetailsRequestModel.setLastName("Stoba");
+        userDetailsRequestModel.setEmail("chigov@gmail.com");
+        userDetailsRequestModel.setPassword("13850000");
+        userDetailsRequestModel.setRepeatPassword("13850000");
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(userDetailsRequestModel));
+
+        //act
+        MvcResult mvcResult = mockMvc.perform(requestBuilder).andReturn();
+
+        //assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST.value(),mvcResult.getResponse().getStatus(),"Incorrect HTTP Status code returned");
     }
 }
